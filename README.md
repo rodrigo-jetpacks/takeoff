@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Takeoff – Floorplan Analysis Sandbox
+
+This project is a lightweight implementation of the **Takeoff** product vision as described in `Takeoff - Master Plan.md`. It focuses on demonstrating the end-to-end workflow for multi-page PDF floorplans:
+
+- Drag-and-drop upload with thumbnail generation for each page
+- Page selection and simulated processing pipeline (cleaning → room detection → export)
+- Interactive analysis canvas with before/after toggle, editable room metadata, and manual boundary adjustments
+- Material-inspired control panels for construction type, scale presets, and custom room legends
+- Export of the processed overlay as a PNG preview
+
+The CV endpoint now invokes the open-source model `ozturkoktay/floor-plan-room-segmentation` on Hugging Face. When a token isn’t configured the system gracefully falls back to deterministic mock detections so the workflow remains testable offline.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+cd /Users/rodrigofranco/Documents/takeoff/web
+npm install
+cp env.example .env.local   # add your Hugging Face token
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app runs at [http://localhost:3000](http://localhost:3000). Upload any multi-page PDF to explore the workflow. (DWG processing is staged for a future milestone.)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/app/page.tsx` – Client-side experience that orchestrates uploads, processing, canvas overlays, and editing tools.
+- `src/app/api/analyze/route.ts` – Talks to `ozturkoktay/floor-plan-room-segmentation` on Hugging Face (and falls back to mock detections if the token is missing).
+- `src/lib/analysis.ts` – Shared mock computer-vision helpers, type definitions, and color mappings for room categories.
+- `src/app/globals.css` – Tailwind-powered Material 3 inspired theme tokens.
 
-## Learn More
+## Environment
 
-To learn more about Next.js, take a look at the following resources:
+Create `.env.local` with:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+HUGGING_FACE_TOKEN=hf_xxx                # Required for real CV analysis
+HF_FLOORPLAN_MODEL=ozturkoktay/floor-plan-room-segmentation # optional override
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Without the token, API calls log a warning and the fallback mock detections keep the UI functional.
 
-## Deploy on Vercel
+## Next Steps
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Swap the fallback pathway for actual per-room metadata storage (confidence thresholds, manual overrides) once the Hugging Face integration is hardened.
+- Persist projects, thumbnails, and room edits to Supabase as outlined in the plan.
+- Expand export formats (SVG/DXF) and add square-footage calculations via the scale inputs.
